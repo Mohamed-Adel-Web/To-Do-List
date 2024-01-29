@@ -7,66 +7,22 @@ import CheckIcon from "@mui/icons-material/Check";
 import EditIcon from "@mui/icons-material/EditOutlined";
 import DeleteIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import IconButton from "@mui/material/IconButton";
-import { useContext, useState } from "react";
-import { TasksContext } from "../context/Context";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import { TextField } from "@mui/material";
-export default function Todo({ task, cat }) {
-  const [open, setOpen] = useState(false);
-  const [openEdit, setEditOpen] = useState(false);
-  const [editInput, setEditInput] = useState({
-    title: task.title,
-    details: task.details,
-  });
-  const handleDeletModalOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDeleteModalClose = () => {
-    setOpen(false);
-  };
-  const handleEditModalOpen = () => {
-    setEditOpen(true);
-  };
-
-  const handleEditModalClose = () => {
-    setEditOpen(false);
-  };
-
-  const {tasks, setTask} = useContext(TasksContext);
+import { useContext } from "react";
+import { useTask } from "../context/Context";
+import { ToastContext } from "../context/ToastContext";
+export default function Todo({
+  task,
+  cat,
+  handleDeleteModalOpen,
+  handleEditModalOpen,
+}) {
+  const { handleToast } = useContext(ToastContext);
+  const { tasks, dispatch } = useTask();
   function handleCheck(id) {
-    const newTasksList = tasks.map((task) => {
-      if (task.id === id) {
-        task.IsCompleted = !task.IsCompleted;
-      }
-      return task;
-    });
-    setTask(newTasksList);
-    window.localStorage.setItem("task",JSON.stringify(newTasksList))
+    dispatch({ type: "checked", payload: { targetId: id } });
+    handleToast("Task state edited successfully", "success");
   }
-  function handleDeleteConfirm(id) {
-    const newTasksList = tasks.filter((task) => {
-      return task.id != id;
-    });
-    setTask(newTasksList);
-    localStorage.setItem("task", JSON.stringify(newTasksList));
-  }
-  function handleEditConfirm(id) {
-    const newTasksList = tasks.map((task) => {
-      if (task.id == id) {
-        return { ...task, title: editInput.title, details: editInput.details };
-      } else {
-        return task;
-      }
-    });
-    setTask(newTasksList);
-    localStorage.setItem("task", JSON.stringify(newTasksList));
-  }
+
   return (
     <>
       <Card
@@ -89,7 +45,14 @@ export default function Todo({ task, cat }) {
         <CardContent>
           <Grid container spacing={2}>
             <Grid xs={8}>
-              <Typography style={{textDecoration: task.IsCompleted?"line-through":"none"}} variant="h5">{task.title}</Typography>
+              <Typography
+                style={{
+                  textDecoration: task.IsCompleted ? "line-through" : "none",
+                }}
+                variant="h5"
+              >
+                {task.title}
+              </Typography>
               <Typography style={{ color: "#9e9e9e" }}>
                 {task.details}
               </Typography>
@@ -125,7 +88,7 @@ export default function Todo({ task, cat }) {
                   border: "1px solid #0d47a1",
                 }}
                 onClick={() => {
-                  handleEditModalOpen();
+                  handleEditModalOpen(task);
                 }}
               >
                 <EditIcon />
@@ -139,7 +102,7 @@ export default function Todo({ task, cat }) {
                   border: "1px solid #d50000",
                 }}
                 onClick={() => {
-                  handleDeletModalOpen();
+                  handleDeleteModalOpen(task);
                 }}
               >
                 <DeleteIcon />
@@ -148,104 +111,6 @@ export default function Todo({ task, cat }) {
           </Grid>
         </CardContent>
       </Card>
-      {/* delete modal */}
-      <Dialog
-        open={open}
-        onClose={handleDeleteModalClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-        style={{ color: "#d50000" }}
-      >
-        <DialogTitle
-          id="alert-dialog-titles"
-          style={{ fontWeight: "bold", color: "#b71c1c" }}
-        >
-          Delete Task
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete This Task ?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            style={{ color: "#b71c1c", fontWeight: "bold" }}
-            onClick={handleDeleteModalClose}
-          >
-            Cancel
-          </Button>
-          <Button
-            style={{ color: "#b71c1c", fontWeight: "bold" }}
-            onClick={() => {
-              handleDeleteModalClose();
-              handleDeleteConfirm(task.id);
-            }}
-            autoFocus
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-      {/* delete modal */}
-      {/* edit modal */}
-      <Dialog
-        open={openEdit}
-        onClose={handleEditModalClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-        style={{ color: "#d50000" }}
-      >
-        <DialogTitle
-          id="alert-dialog-titles"
-          style={{ fontWeight: "bold", color: "#1a237e" }}
-        >
-          Edit Task
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            <TextField
-              id="standard-basic"
-              label="Task title"
-              variant="standard"
-              fullWidth
-              value={editInput.title}
-              onChange={(event) => {
-                setEditInput({ ...editInput, title: event.target.value });
-              }}
-            />
-            <TextField
-              id="standard-basic"
-              label="task details"
-              variant="standard"
-              fullWidth
-              sx={{ mt: 2 }}
-              value={editInput.details}
-              onChange={(event) => {
-                setEditInput({ ...editInput, details: event.target.value });
-              }}
-            />
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            style={{ color: "#1a237e", fontWeight: "bold" }}
-            onClick={handleEditModalClose}
-          >
-            Cancel
-          </Button>
-          <Button
-            style={{ color: "#1a237e", fontWeight: "bold" }}
-            onClick={() => {
-              handleEditModalClose();
-              handleEditConfirm(task.id);
-            }}
-            autoFocus
-          >
-            Edit
-          </Button>
-        </DialogActions>
-      </Dialog>
-      {/* edit modal */}
     </>
   );
 }
